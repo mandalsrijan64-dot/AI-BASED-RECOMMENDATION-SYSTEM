@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CineMatch – Movie Recommendation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d12;
+    --surface: #15151d;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0efff;
+    --muted: #8a8aaa;
+    --dim: #4a4a66;
+    --accent: #7b6fff;
+    --accent2: #a78bfa;
+    --teal: #2dd4bf;
+    --coral: #f87171;
+    --amber: #fbbf24;
+    --green: #34d399;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --glow: 0 0 40px rgba(123,111,255,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ─────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .user-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .user-select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 1rem;
+  }
+
+  .user-select:focus { border-color: var(--accent); }
+
+  .method-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .method-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+  }
+
+  .method-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+
+  .method-btn.active {
+    background: rgba(123,111,255,0.12);
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+
+  .method-indicator {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .ind-cb { background: var(--teal); }
+  .ind-cf { background: var(--coral); }
+  .ind-hy { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  .rated-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .rated-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rated-item:last-child { border-bottom: none; }
+
+  .rated-title { color: var(--text); font-size: 0.8rem; }
+  .rated-stars { color: var(--amber); letter-spacing: -1px; font-size: 0.7rem; }
+
+  /* ── Main ─────────────────────────────────────────── */
+  .main {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .page-title span { color: var(--accent2); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  .badge-cb { color: var(--teal); border-color: rgba(45,212,191,0.3); background: rgba(45,212,191,0.06); }
+  .badge-cf { color: var(--coral); border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); }
+  .badge-hy { color: var(--accent2); border-color: rgba(167,139,250,0.3); background: rgba(123,111,255,0.08); }
+
+  /* ── Stats Row ─────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-value { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; }
+  .stat-sub { font-size: 0.75rem; color: var(--dim); }
+
+  /* ── Recs Grid ─────────────────────────────────────── */
+  .rec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .rec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    cursor: default;
+  }
+
+  .rec-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border2);
+    box-shadow: var(--glow);
+  }
+
+  .rec-card-top {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .rec-rank {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  .rec-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .rec-year { font-size: 0.78rem; color: var(--muted); }
+
+  .rec-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .genre-pill {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .rec-card-bottom {
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .score-bar-wrap { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-right: 8px; }
+  .score-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+  .score-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* ── Similar Users ─────────────────────────────────── */
+  .neighbors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .neighbor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .neighbor-name { font-weight: 500; font-size: 0.88rem; }
+  .neighbor-sim { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── Loading / empty ─────────────────────────────── */
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 1.5rem 0;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; }
+
+  /* ── Section title ─────────────────────────────────── */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      CineMatch
+    </div>
+
+    <div>
+      <div class="section-label">Profile</div>
+      <div class="user-card">
+        <select class="user-select" id="userSelect"></select>
+        <div class="section-label">Method</div>
+        <div class="method-btns">
+          <button class="method-btn" data-method="cb">
+            <div class="method-indicator ind-cb"></div>
+            Content-Based
+          </button>
+          <button class="method-btn" data-method="cf">
+            <div class="method-indicator ind-cf"></div>
+            Collaborative
+          </button>
+          <button class="method-btn active" data-method="hybrid">
+            <div class="method-indicator ind-hy"></div>
+            Hybrid (default)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div>
+      <div class="section-label">Your ratings</div>
+      <div class="rated-list" id="ratedList"></div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">For <span id="nameTitle">Snehamoy</span></div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Personalised picks just for you</div>
+      </div>
+      <div id="methodBadge"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Movies rated</div>
+        <div class="stat-value" id="statRated">—</div>
+        <div class="stat-sub">by you</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Recommendations</div>
+        <div class="stat-value" id="statRecs">—</div>
+        <div class="stat-sub">for you</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Similar users</div>
+        <div class="stat-value" id="statNeighbors">—</div>
+        <div class="stat-sub">found</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top score</div>
+        <div class="stat-value" id="statTop">—</div>
+        <div class="stat-sub">match confidence</div>
+      </div>
+    </div>
+
+    <!-- Recs -->
+    <div>
+      <div class="section-title">Recommended for you</div>
+      <div id="recsContainer" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- Similar users -->
+    <div>
+      <div class="section-title">Similar viewers</div>
+      <div id="neighborsContainer" style="margin-top:1rem;"></div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+
+const MOVIES = {
+  1:  { title: "Inception",          genres: ["Sci-Fi","Thriller"],   year: 2010, director: "Christopher Nolan" },
+  2:  { title: "The Dark Knight",    genres: ["Action","Thriller"],   year: 2008, director: "Christopher Nolan" },
+  3:  { title: "Interstellar",       genres: ["Sci-Fi","Drama"],      year: 2014, director: "Christopher Nolan" },
+  4:  { title: "The Matrix",         genres: ["Sci-Fi","Action"],     year: 1999, director: "Wachowski Sisters" },
+  5:  { title: "Parasite",           genres: ["Thriller","Drama"],    year: 2019, director: "Bong Joon-ho" },
+  6:  { title: "Avengers: Endgame",  genres: ["Action","Sci-Fi"],     year: 2019, director: "Russo Brothers" },
+  7:  { title: "The Godfather",      genres: ["Crime","Drama"],       year: 1972, director: "Francis Ford Coppola" },
+  8:  { title: "Pulp Fiction",       genres: ["Crime","Thriller"],    year: 1994, director: "Quentin Tarantino" },
+  9:  { title: "Spirited Away",      genres: ["Animation","Fantasy"], year: 2001, director: "Hayao Miyazaki" },
+  10: { title: "The Prestige",       genres: ["Thriller","Drama"],    year: 2006, director: "Christopher Nolan" },
+  11: { title: "Blade Runner 2049",  genres: ["Sci-Fi","Drama"],      year: 2017, director: "Denis Villeneuve" },
+  12: { title: "Arrival",            genres: ["Sci-Fi","Drama"],      year: 2016, director: "Denis Villeneuve" },
+  13: { title: "Fight Club",         genres: ["Drama","Thriller"],    year: 1999, director: "David Fincher" },
+  14: { title: "Princess Mononoke",  genres: ["Animation","Fantasy"], year: 1997, director: "Hayao Miyazaki" },
+  15: { title: "Goodfellas",         genres: ["Crime","Drama"],       year: 1990, director: "Martin Scorsese" },
+};
+
+const RATINGS = {
+  snehamoy: { 1:5, 2:4, 3:5, 4:4, 10:4, 11:3 },
+  archit:    { 4:5, 6:4, 2:3, 11:5, 12:4, 3:3 },
+  sayan:  { 7:5, 8:5, 15:4, 5:4, 13:3 },
+  sandhipan:   { 1:4, 3:5, 11:5, 12:5, 4:3 },
+  rishika:    { 9:5, 14:5, 5:4, 7:3 },
+  nikita:  { 2:5, 6:5, 4:4, 1:3, 8:4 },
+  ananya:  { 5:5, 7:4, 13:5, 8:3, 15:4 },
+  arka:  { 9:4, 14:5, 3:3, 12:4 },
+  saikat:   { 1:5, 10:5, 2:4, 13:3, 8:4 },
+  debu:   { 6:5, 4:5, 2:4, 11:4 },
+};
+
+// ── Similarity helpers ────────────────────────────────────────────────────
+
+function cosineSim(a, b) {
+  const keys = Object.keys(a).filter(k => k in b);
+  if (!keys.length) return 0;
+  let dot = 0, na = 0, nb = 0;
+  keys.forEach(k => { dot += a[k] * b[k]; });
+  Object.values(a).forEach(v => na += v*v);
+  Object.values(b).forEach(v => nb += v*v);
+  return na && nb ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;
+}
+
+function pearsonSim(a, b) {
+  const keys = Object.keys(a).filter(k => k in b);
+  if (keys.length < 2) return 0;
+  const ma = keys.reduce((s,k) => s+a[k],0)/keys.length;
+  const mb = keys.reduce((s,k) => s+b[k],0)/keys.length;
+  let num=0, da=0, db=0;
+  keys.forEach(k => {
+    num += (a[k]-ma)*(b[k]-mb);
+    da  += (a[k]-ma)**2;
+    db  += (b[k]-mb)**2;
+  });
+  return da&&db ? num/(Math.sqrt(da)*Math.sqrt(db)) : 0;
+}
+
+function movieFeatureVec(id) {
+  const m = MOVIES[id];
+  const v = {};
+  m.genres.forEach(g => v[`g_${g}`] = 1);
+  v[`d_${m.director}`] = 1;
+  return v;
+}
+
+// ── Recommenders ─────────────────────────────────────────────────────────
+
+function contentBased(userId, topN=6) {
+  const rated = RATINGS[userId];
+  const profile = {};
+  Object.entries(rated).forEach(([mid, r]) => {
+    const w = r/5;
+    Object.entries(movieFeatureVec(+mid)).forEach(([f,v]) => {
+      profile[f] = (profile[f]||0) + w*v;
+    });
+  });
+  return Object.keys(MOVIES)
+    .map(Number)
+    .filter(id => !(id in rated))
+    .map(id => ({ id, score: cosineSim(profile, movieFeatureVec(id)) }))
+    .sort((a,b) => b.score - a.score)
+    .slice(0, topN);
+}
+
+function collaborative(userId, topN=6, k=4) {
+  const ur = RATINGS[userId];
+  const neighbors = Object.entries(RATINGS)
+    .filter(([uid]) => uid !== userId)
+    .map(([uid, r]) => [uid, pearsonSim(ur, r)])
+    .filter(([,s]) => s > 0)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0, k);
+
+  const unseen = Object.keys(MOVIES).map(Number).filter(id => !(id in ur));
+  return unseen.map(id => {
+    let num=0, den=0;
+    neighbors.forEach(([uid, sim]) => {
+      if (RATINGS[uid][id] !== undefined) {
+        num += sim * RATINGS[uid][id];
+        den += Math.abs(sim);
+      }
+    });
+    return den ? { id, score: num/den } : null;
+  })
+  .filter(Boolean)
+  .sort((a,b) => b.score - a.score)
+  .slice(0, topN);
+}
+
+function normalise(recs) {
+  if (!recs.length) return {};
+  const vals = recs.map(r => r.score);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const rng = mx-mn || 1e-9;
+  const out = {};
+  recs.forEach(r => out[r.id] = (r.score-mn)/rng);
+  return out;
+}
+
+function hybrid(userId, topN=6, wCB=0.4, wCF=0.6) {
+  const cbN = normalise(contentBased(userId, 20));
+  const cfN = normalise(collaborative(userId, 20));
+  const ids = new Set([...Object.keys(cbN), ...Object.keys(cfN)].map(Number));
+  const rated = RATINGS[userId];
+  return [...ids]
+    .filter(id => !(id in rated))
+    .map(id => ({ id, score: wCB*(cbN[id]||0) + wCF*(cfN[id]||0) }))
+    .sort((a,b) => b.score - a.score)
+    .slice(0, topN);
+}
+
+function similarUsers(userId, topN=3) {
+  const ur = RATINGS[userId];
+  return Object.entries(RATINGS)
+    .filter(([uid]) => uid !== userId)
+    .map(([uid, r]) => ({ uid, sim: pearsonSim(ur, r) }))
+    .sort((a,b) => b.sim - a.sim)
+    .slice(0, topN);
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────
+
+const USERS = Object.keys(RATINGS);
+let currentUser = USERS[0];
+let currentMethod = 'hybrid';
+
+const AVATAR_COLORS = [
+  { bg:'rgba(123,111,255,0.18)', color:'#a78bfa' },
+  { bg:'rgba(45,212,191,0.15)',  color:'#2dd4bf' },
+  { bg:'rgba(248,113,113,0.15)', color:'#f87171' },
+  { bg:'rgba(251,191,36,0.15)',  color:'#fbbf24' },
+  { bg:'rgba(52,211,153,0.15)',  color:'#34d399' },
+];
+
+function avatarColor(uid) {
+  const i = USERS.indexOf(uid) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[i];
+}
+
+function stars(n) {
+  return '★'.repeat(n) + '☆'.repeat(5-n);
+}
+
+function scoreColor(s, method) {
+  if (method === 'cf') {
+    // raw 1-5 scale
+    const pct = (s-1)/4;
+    return pct > 0.7 ? '#34d399' : pct > 0.4 ? '#fbbf24' : '#8a8aaa';
+  }
+  return s > 0.7 ? '#34d399' : s > 0.4 ? '#a78bfa' : '#8a8aaa';
+}
+
+function scorePct(s, method) {
+  if (method === 'cf') return Math.min(100, ((s-1)/4)*100);
+  return Math.min(100, s*100);
+}
+
+function scoreDisplay(s, method) {
+  if (method === 'cf') return s.toFixed(1);
+  return (s*100).toFixed(0)+'%';
+}
+
+const methodMeta = {
+  cb:     { label:'Content-Based', badgeClass:'badge-cb',   desc:'Similar to what you liked' },
+  cf:     { label:'Collaborative',  badgeClass:'badge-cf',   desc:'Liked by similar viewers' },
+  hybrid: { label:'Hybrid',         badgeClass:'badge-hy',   desc:'Best-of-both approach' },
+};
+
+function render() {
+  const user = currentUser;
+  const method = currentMethod;
+  const rated = RATINGS[user];
+
+  // Title
+  document.getElementById('nameTitle').textContent =
+    user.charAt(0).toUpperCase() + user.slice(1);
+
+  // Badge
+  const meta = methodMeta[method];
+  document.getElementById('methodBadge').innerHTML =
+    `<span class="badge ${meta.badgeClass}">${meta.label} · ${meta.desc}</span>`;
+
+  // Rated list
+  document.getElementById('ratedList').innerHTML = Object.entries(rated).map(([mid, r]) =>
+    `<div class="rated-item">
+      <span class="rated-title">${MOVIES[+mid].title}</span>
+      <span class="rated-stars">${stars(r)}</span>
+    </div>`
+  ).join('');
+
+  // Recommendations
+  let recs = [];
+  if (method === 'cb')     recs = contentBased(user);
+  else if (method === 'cf') recs = collaborative(user);
+  else                      recs = hybrid(user);
+
+  document.getElementById('statRated').textContent = Object.keys(rated).length;
+  document.getElementById('statRecs').textContent = recs.length;
+  document.getElementById('statTop').textContent =
+    recs.length ? scoreDisplay(recs[0].score, method) : '—';
+
+  document.getElementById('recsContainer').innerHTML = recs.length ? `
+    <div class="rec-grid">
+      ${recs.map((rec, i) => {
+        const m = MOVIES[rec.id];
+        const pct = scorePct(rec.score, method).toFixed(1);
+        const col = scoreColor(rec.score, method);
+        return `<div class="rec-card">
+          <div class="rec-card-top">
+            <div class="rec-rank">#${i+1} pick</div>
+            <div class="rec-title">${m.title}</div>
+            <div class="rec-year">${m.year} · ${m.director}</div>
+            <div class="rec-genres">
+              ${m.genres.map(g=>`<span class="genre-pill">${g}</span>`).join('')}
+            </div>
+          </div>
+          <div class="rec-card-bottom">
+            <div class="score-bar-wrap">
+              <div class="score-bar" style="width:${pct}%;background:${col};"></div>
+            </div>
+            <div class="score-label" style="color:${col};">${scoreDisplay(rec.score, method)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="empty">No recommendations found for this method.</div>';
+
+  // Similar users
+  const neighbors = similarUsers(user);
+  document.getElementById('statNeighbors').textContent = neighbors.length;
+
+  document.getElementById('neighborsContainer').innerHTML = neighbors.length ? `
+    <div class="neighbors-grid">
+      ${neighbors.map(n => {
+        const ac = avatarColor(n.uid);
+        const initials = n.uid.charAt(0).toUpperCase();
+        const simPct = (n.sim * 100).toFixed(0);
+        return `<div class="neighbor-card">
+          <div class="avatar" style="background:${ac.bg};color:${ac.color};">${initials}</div>
+          <div>
+            <div class="neighbor-name">${n.uid.charAt(0).toUpperCase()+n.uid.slice(1)}</div>
+            <div class="neighbor-sim">${simPct}% similar taste</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="empty">No similar users found.</div>';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+
+const userSelect = document.getElementById('userSelect');
+USERS.forEach(u => {
+  const opt = document.createElement('option');
+  opt.value = u;
+  opt.textContent = u.charAt(0).toUpperCase() + u.slice(1);
+  userSelect.appendChild(opt);
+});
+
+userSelect.addEventListener('change', e => {
+  currentUser = e.target.value;
+  render();
+});
+
+document.querySelectorAll('.method-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMethod = btn.dataset.method;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
