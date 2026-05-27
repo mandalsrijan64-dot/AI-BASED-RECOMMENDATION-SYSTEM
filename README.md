@@ -11,6 +11,12 @@ DURATION:4 WEEKS
 
 MENTOR:NEELA SANTOSH
 
+
+#OUTPUT
+<img width="1919" height="1078" alt="Image" src="https://github.com/user-attachments/assets/b85a06ab-7275-4714-b394-522a4a1e239c" />
+
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/103795ab-f869-4a9d-8185-a4ec2736076e" />
+
 ## AI-Based Recommendation System Using Python – Description
 
 An AI-Based Recommendation System using Python is an intelligent application designed to suggest relevant products, services, movies, books, music, or other items to users based on their preferences, interests, and behavior. Recommendation systems are widely used in modern digital platforms such as e-commerce websites, streaming services, social media applications, and online learning platforms to improve user experience and engagement.
